@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
     :root {
-      --bg: #0f0f1a;
-      --card: #1a1b2e;
+
+  --card: #1a1b2e;
       --accent: #00d4ff;
       --accent-dark: #0099cc;
       --correct: #00ff9d;
