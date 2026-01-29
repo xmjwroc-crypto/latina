@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Łacina – Fiszki & Quiz</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1b2e;
+      --accent: #00d4ff;
+      --accent-dark: #0099cc;
+      --correct: #00ff9d;
+      --wrong: #ff4d4d;
+      --text: #e0e0ff;
+      --gray: #8899aa;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0a0e1f, #141a3a);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      margin: 20px 0 40px;
+      text-shadow: 0 2px 10px rgba(0,212,255,0.3);
+    }
+    h1 {
+      font-size: 2.4rem;
+      background: linear-gradient(90deg, #00d4ff, #a78bfa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      max-width: 900px;
+      margin: 0 auto 40px;
+    }
+
+    .menu-btn {
+      padding: 16px;
+      font-size: 1.1rem;
+      background: var(--card);
+      border: 2px solid transparent;
+      border-radius: 16px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+
+    .menu-btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,212,255,0.25);
+      border-color: var(--accent);
+    }
+
+    .menu-btn i { margin-right: 8px; }
+
+    .screen { display: none; max-width: 900px; margin: 0 auto; }
+    .screen.active { display: block; }
+
+    .lessons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin: 30px 0;
+    }
+
+    .lesson-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 1px solid #333355;
+    }
+
+    .lesson-card:hover {
+      transform: scale(1.04);
+      border-color: var(--accent);
+      box-shadow: 0 10px 30px rgba(0,212,255,0.15);
+    }
+
+    .lesson-card.completed {
+      border-color: var(--correct);
+      background: linear-gradient(145deg, #1a2a22, #0f1a15);
+    }
+
+    .flashcard {
+      width: 100%;
+      max-width: 420px;
+      height: 260px;
+      margin: 40px auto;
+      perspective: 1000px;
+    }
+
+    .flashcard-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition: transform 0.7s;
+      transform-style: preserve-3d;
+    }
+
+    .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+
+    .flashcard-front, .flashcard-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      font-size: 2.2rem;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
+
+    .flashcard-front {
+      background: linear-gradient(135deg, #1e3a5f, #0f1a3a);
+      color: var(--accent);
+    }
+
+    .flashcard-back {
+      background: linear-gradient(135deg, #2a1e5f, #3a0f5a);
+      color: #fff;
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      margin: 8px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary    { background: var(--accent); color: black; }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-success    { background: var(--correct); color: black; }
+    .btn-danger     { background: var(--wrong);   color: white; }
+
+    .quiz-screen {
+      background: linear-gradient(to bottom, #0a001f, #000814);
+      min-height: 70vh;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.7);
+    }
+
+    .question {
+      font-size: 1.8rem;
+      margin: 40px 0 60px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .option {
+      background: #1a0040;
+      border: 2px solid #444488;
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 1.3rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.4s;
+    }
+
+    .option:hover {
+      border-color: var(--accent);
+      background: #2a0060;
+      transform: scale(1.03);
+    }
+
+    .option.correct  { background: var(--correct); color: black; border-color: #00cc88; }
+    .option.wrong    { background: var(--wrong);   color: white; border-color: #cc0000; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      padding: 24px;
+      border-radius: 16px;
+      text-align: center;
+      border: 1px solid #333355;
+    }
+
+    .stat-number {
+      font-size: 2.8rem;
+      color: var(--accent);
+      margin: 10px 0;
+    }
+
+    @media (max-width: 600px) {
+      .options { grid-template-columns: 1fr; }
+      h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Łacina – Fiszki & Quiz</h1>
+</header>
+
+<div class="menu">
+  <button class="menu-btn" onclick="show('learning')"><i class="fas fa-book"></i> Nauka</button>
+  <button class="menu-btn" onclick="show('repetitions')"><i class="fas fa-sync-alt"></i> Powtórki</button>
+  <button class="menu-btn" onclick="show('quiz')"><i class="fas fa-gamepad"></i> Quiz</button>
+  <button class="menu-btn" onclick="show('stats')"><i class="fas fa-chart-bar"></i> Statystyki</button>
+</div>
+
+<!-- NAUKA -->
+<div id="learning" class="screen">
+  <h2 style="text-align:center; margin:30px 0 20px;">Wybierz lekcję</h2>
+  <div class="lessons-grid" id="lessons-list"></div>
+
+  <div id="lesson-view" style="display:none;">
+    <div class="flashcard" id="flashcard">
+      <div class="flashcard-inner">
+        <div class="flashcard-front" id="front"></div>
+        <div class="flashcard-back" id="back"></div>
+      </div>
+    </div>
+
+    <div class="flashcard-buttons">
+      <button class="btn btn-primary" onclick="flipCard()">Odwróć</button>
+      <button class="btn btn-success" onclick="nextWord()">Następne</button>
+      <button class="btn btn-danger" onclick="backToLessons()">Wróć do lekcji</button>
+    </div>
+  </div>
+</div>
+
+<!-- POWTÓRKI -->
+<div id="repetitions" class="screen">
+  <h2 style="text-align:center; margin:40px 0 20px;">Powtórki SRS</h2>
+  <div id="repetition-view">
+    <div class="flashcard" id="rep-flashcard">
+      <div class="flashcard-inner">
+        <div class="flashcard-front" id="rep-front"></div>
+        <div class="flashcard-back" id="rep-back"></div>
+      </div>
+    </div>
+    <div style="text-align:center; margin:30px 0;">
+      <input type="text" id="rep-answer" placeholder="Twoje tłumaczenie..." style="padding:14px; font-size:1.2rem; width:80%; max-width:400px; border-radius:12px; border:1px solid #444; background:#111; color:white;">
+      <button class="btn btn-primary" style="margin-top:16px;" onclick="checkRepAnswer()">Sprawdź</button>
+    </div>
+  </div>
+  <div id="rep-empty" style="text-align:center; font-size:1.3rem; color:var(--gray); display:none;">
+    Brawo! Na dzisiaj nie ma więcej powtórek ✌️
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="screen">
+  <div class="quiz-screen">
+    <h2 style="text-align:center; margin-bottom:20px;">Quiz – kto chce zostać łacinnikiem?</h2>
+    <div class="question" id="quiz-question"></div>
+    <div class="options" id="quiz-options"></div>
+  </div>
+</div>
+
+<!-- STATYSTYKI -->
+<div id="stats" class="screen">
+  <h2 style="text-align:center; margin:40px 0 30px;">Twoje postępy</h2>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div>Nauczone słowa</div>
+      <div class="stat-number" id="stat-learned">0</div>
+    </div>
+    <div class="stat-card">
+      <div>Rozegrane quizy</div>
+      <div class="stat-number" id="stat-quizzes">0</div>
+    </div>
+    <div class="stat-card">
+      <div>Poprawne odpowiedzi</div>
+      <div class="stat-number" id="stat-correct">0</div>
+    </div>
+    <div class="stat-card">
+      <div>Skuteczność</div>
+      <div class="stat-number" id="stat-percent">—</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --------------------- Dane ---------------------
+const words = [
+  {la:"hortus, -ūs",       pl:"ogród"},
+  {la:"puella, -ae",       pl:"dziewczyna"},
+  {la:"domus, -ūs",        pl:"dom"},
+  {la:"via, -ae",          pl:"droga"},
+  {la:"aqua, -ae",         pl:"woda"},
+  {la:"magnus, -a, -um",   pl:"duży / wielki"},
+  {la:"bonus, -a, -um",    pl:"dobry"},
+  {la:"sum, esse",         pl:"być"},
+  {la:"amo, amare",        pl:"kochać"},
+  {la:"video, videre",     pl:"widzieć"},
+  {la:"facio, facere",     pl:"robić / czynić"},
+  {la:"venio, venire",     pl:"przyjść"},
+  {la:"et",                pl:"i"},
+  {la:"in",                pl:"w / na (+ abl.) / do (+ acc.)"},
+  {la:"cum",               pl:"z (+ abl.)"},
+];
+
+const lessons = [
+  words.slice(0, 5),
+  words.slice(5, 10),
+  words.slice(10, 15),
+];
+
+let currentLessonWords = [];
+let currentWordIndex = 0;
+let currentWord = null;
+
+// localStorage
+let data = JSON.parse(localStorage.getItem('latinApp') || '{}');
+if (!data.completed) data.completed = [];
+if (!data.srs)      data.srs = {};
+if (!data.stats)    data.stats = {learned:0, quizzes:0, correct:0};
+
+function save() {
+  localStorage.setItem('latinApp', JSON.stringify(data));
+}
+
+// --------------------- Nawigacja ---------------------
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  if (id === 'learning')     renderLessons();
+  if (id === 'repetitions')  startRepetitions();
+  if (id === 'quiz')         startQuiz();
+  if (id === 'stats')        renderStats();
+}
+
+// --------------------- NAUKA – poprawiona logika fiszek ---------------------
+function renderLessons() {
+  const container = document.getElementById('lessons-list');
+  container.innerHTML = '';
+
+  lessons.forEach((lesson, i) => {
+    const div = document.createElement('div');
+    div.className = 'lesson-card' + (data.completed.includes(i) ? ' completed' : '');
+    div.innerHTML = `<h3>Lekcja ${i+1}</h3><small>${lesson.length} słówek</small>`;
+    div.onclick = () => openLesson(i);
+    container.appendChild(div);
+  });
+}
+
+function openLesson(idx) {
+  currentLessonWords = lessons[idx].slice();
+  currentWordIndex = 0;
+  document.getElementById('lesson-view').style.display = 'block';
+  document.getElementById('lessons-list').style.display = 'none';
+  showWord();   // od razu pokazujemy pierwsze słówko
+}
+
+function showWord() {
+  if (currentWordIndex >= currentLessonWords.length) return;
+
+  currentWord = currentLessonWords[currentWordIndex];
+
+  const card = document.getElementById('flashcard');
+  card.classList.remove('flipped');           // zawsze wracamy do strony łacińskiej
+
+  document.getElementById('front').textContent = currentWord.la;
+  document.getElementById('back').textContent  = currentWord.pl;
+}
+
+function flipCard() {
+  document.getElementById('flashcard').classList.toggle('flipped');
+}
+
+function nextWord() {
+  currentWordIndex++;
+
+  if (currentWordIndex >= currentLessonWords.length) {
+    const lessonIdx = lessons.findIndex(l => l === currentLessonWords);
+    if (lessonIdx !== -1 && !data.completed.includes(lessonIdx)) {
+      data.completed.push(lessonIdx);
+      data.stats.learned += currentLessonWords.length;
+      save();
+    }
+    alert('Koniec lekcji! 🎉');
+    backToLessons();
+    return;
+  }
+
+  // Najpierw chowamy (wracamy do przodu), potem po animacji pokazujemy nowe
+  const card = document.getElementById('flashcard');
+  card.classList.remove('flipped');
+
+  setTimeout(() => {
+    showWord();
+  }, 720);   // 700 ms = czas transition w CSS + mały zapas
+}
+
+function backToLessons() {
+  document.getElementById('lesson-view').style.display = 'none';
+  document.getElementById('lessons-list').style.display = 'grid';
+  renderLessons();
+}
+
+// --------------------- POWTÓRKI (pozostała część bez zmian) ---------------------
+function startRepetitions() {
+  let pool = [];
+  data.completed.forEach(i => pool.push(...lessons[i]));
+
+  if (pool.length === 0) {
+    document.getElementById('rep-empty').style.display = 'block';
+    document.getElementById('repetition-view').style.display = 'none';
+    return;
+  }
+
+  pool.sort(()=>Math.random()-0.5);
+  currentLessonWords = pool.slice(0, Math.min(8, pool.length));
+  currentWordIndex = 0;
+  showRepWord();
+}
+
+function showRepWord() {
+  currentWord = currentLessonWords[currentWordIndex];
+  document.getElementById('rep-front').textContent = currentWord.la;
+  document.getElementById('rep-back').textContent = currentWord.pl;
+  document.getElementById('rep-flashcard').classList.remove('flipped');
+  document.getElementById('rep-answer').value = '';
+}
+
+function checkRepAnswer() {
+  const given = document.getElementById('rep-answer').value.trim().toLowerCase();
+  const correct = currentWord.pl.toLowerCase();
+
+  document.getElementById('rep-flashcard').classList.add('flipped');
+
+  setTimeout(() => {
+    if (given === correct) {
+      alert('Dobrze! ✓');
+    } else {
+      alert(`Źle… Poprawnie: ${currentWord.pl}`);
+    }
+
+    currentWordIndex++;
+    if (currentWordIndex >= currentLessonWords.length) {
+      alert('Koniec powtórek na dzisiaj!');
+      show('learning');
+    } else {
+      showRepWord();
+    }
+  }, 1200);
+}
+
+// --------------------- QUIZ ---------------------
+let quizWords = [];
+let quizIndex = 0;
+
+function startQuiz() {
+  quizWords = words.slice().sort(()=>Math.random()-0.5).slice(0,10);
+  quizIndex = 0;
+  nextQuizQuestion();
+}
+
+function nextQuizQuestion() {
+  if (quizIndex >= quizWords.length) {
+    alert('Koniec quizu!');
+    show('stats');
+    return;
+  }
+
+  const q = quizWords[quizIndex];
+  document.getElementById('quiz-question').textContent = `Jak brzmi po polsku: ${q.la}?`;
+
+  const opts = [q.pl];
+  while (opts.length < 4) {
+    const rand = words[Math.floor(Math.random()*words.length)].pl;
+    if (!opts.includes(rand)) opts.push(rand);
+  }
+  opts.sort(()=>Math.random()-0.5);
+
+  const container = document.getElementById('quiz-options');
+  container.innerHTML = '';
+
+  opts.forEach(opt => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = opt;
+    div.onclick = () => checkQuizAnswer(opt, q.pl, div);
+    container.appendChild(div);
+  });
+
+  data.stats.quizzes++;
+  save();
+  updateStatsDisplay();
+}
+
+function checkQuizAnswer(selected, correct, element) {
+  const isCorrect = selected === correct;
+
+  if (isCorrect) {
+    element.classList.add('correct');
+    data.stats.correct++;
+  } else {
+    element.classList.add('wrong');
+    [...document.querySelectorAll('.option')].forEach(el => {
+      if (el.textContent === correct) el.classList.add('correct');
+    });
+  }
+
+  save();
+  updateStatsDisplay();
+
+  setTimeout(() => {
+    quizIndex++;
+    nextQuizQuestion();
+  }, 1800);
+}
+
+// --------------------- STATYSTYKI ---------------------
+function renderStats() {
+  document.getElementById('stat-learned').textContent = data.stats.learned;
+  document.getElementById('stat-quizzes').textContent = data.stats.quizzes;
+  document.getElementById('stat-correct').textContent = data.stats.correct;
+
+  const perc = data.stats.quizzes > 0
+    ? Math.round((data.stats.correct / data.stats.quizzes) * 100) + '%'
+    : '—';
+  document.getElementById('stat-percent').textContent = perc;
+}
+
+function updateStatsDisplay() {
+  if (document.getElementById('stats').classList.contains('active')) {
+    renderStats();
+  }
+}
+
+// START
+show('learning');
+</script>
+</body>
+</html>
